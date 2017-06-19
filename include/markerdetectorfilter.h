@@ -6,13 +6,8 @@
 class MarkerDetectorFilter : public QAbstractVideoFilter {
     Q_OBJECT
 
-    Q_PROPERTY(int threshold READ threshold WRITE threshold NOTIFY thresholdChanged)
-
 public:
     QVideoFilterRunnable* createFilterRunnable() override;
-
-    int threshold() const { return m_threshold; }
-    void threshold(int thr) { m_threshold = thr; }
 
 signals:
     void thresholdChanged();
@@ -43,7 +38,7 @@ private:
 
 class MarksDetector {
 public:
-    MarksDetector(int threshold);
+    MarksDetector();
 
     void processFame(cv::Mat& grayscale);
     uint64_t encode() const;
@@ -54,7 +49,6 @@ private:
     void findCandidates();
 
 private:
-    int m_threshold;
     int m_minCountournSize;
     uint64_t m_id;
     cv::Mat m_binarized;

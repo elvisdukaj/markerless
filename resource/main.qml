@@ -17,8 +17,6 @@ ApplicationWindow {
 
     MarkerDetectorFilter {
         id: markerDetectorFilter
-
-        threshold: Math.ceil(threshold.value)
     }
 
     Timer {
@@ -32,33 +30,13 @@ ApplicationWindow {
         }
     }
 
-    ColumnLayout {
-        VideoOutput {
-            id: videoOutput
-            source: camera
+    VideoOutput {
+        id: videoOutput
+        source: camera
 
-            anchors.left: parent.left
-            anchors.right: parent.right
+        anchors.fill: parent
 
-            focus : visible // to receive focus and capture key events when visible
-            filters: [markerDetectorFilter]
-        }
-
-        RowLayout {
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            Label {
-                text: qsTr("Threshold vlue: ") + Math.ceil(threshold.value)
-            }
-
-            Slider {
-                id: threshold
-
-                from: 0
-                to: 255
-                stepSize: 1
-            }
-        }
+        focus : visible // to receive focus and capture key events when visible
+        filters: [markerDetectorFilter]
     }
 }

@@ -34,12 +34,12 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
         cv::Mat frameMat, grayscale, binarized;
         videoFrameInGrayScaleAndColor(frame, grayscale, frameMat);
 
-        MarksDetector marksDetector(m_filter->threshold());
+        MarksDetector marksDetector{};
 
         cv::flip(grayscale, grayscale, 1);
         marksDetector.processFame(grayscale);
 
-        cv::threshold(grayscale, binarized, m_filter->threshold(), 255.0, cv::THRESH_BINARY);
+        cv::threshold(grayscale, binarized, 0, 255.0, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
         grayscaleToVideoFrame(frame, binarized, frameMat);
     }
@@ -54,8 +54,7 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
     return *frame;
 }
 
-MarksDetector::MarksDetector(int threshold)
-    : m_threshold{threshold}
+MarksDetector::MarksDetector()
 {
 }
 
@@ -69,18 +68,19 @@ void MarksDetector::processFame(cv::Mat& grayscale)
 
 void MarksDetector::binarize(cv::Mat &grayscale)
 {
-    cv::threshold(grayscale, m_binarized, m_threshold, 255.0, cv::THRESH_BINARY);
+    cv::threshold(grayscale, m_binarized, 0, 255.0, cv::THRESH_BINARY | cv::THRESH_OTSU);
 }
 
 void MarksDetector::findContours()
 {
     cv::findContours(m_binarized, m_contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
-    filterContours();
+//    filterContours();
 
     cv::Mat contousImage(m_binarized.size(), CV_8UC3);
     cv::drawContours(contousImage, m_contours, -1, cv::Scalar{255});
     cv::flip(contousImage, contousImage, 0);
     cv::imshow("Contours", contousImage);
+    cv::waitKey(1);
 }
 
 void MarksDetector::findCandidates()
