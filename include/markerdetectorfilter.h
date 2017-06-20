@@ -28,9 +28,9 @@ private:
     MarkerDetectorFilter* m_filter;
 };
 
-class Mark {
+class Marker {
 public:
-    Mark(const cv::Mat& image);
+    Marker(const cv::Mat& image, const std::vector<cv::Point2f>& points);
     uint64_t id() const;
 private:
     uint64_t m_id;
