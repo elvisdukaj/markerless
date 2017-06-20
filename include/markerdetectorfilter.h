@@ -32,8 +32,11 @@ class Marker {
 public:
     Marker(const cv::Mat& image, const std::vector<cv::Point2f>& points);
     uint64_t id() const;
+    const std::vector<cv::Point2f> points() const noexcept { return m_points; }
+
 private:
     uint64_t m_id;
+    std::vector<cv::Point2f> m_points;
 };
 
 class MarksDetector {
@@ -46,13 +49,14 @@ public:
 private:
     void binarize(cv::Mat& grayscale);
     void findContours();
-    void findCandidates();
+    std::vector<Marker> findCandidates();
 
 private:
     int m_minCountournSize;
     uint64_t m_id;
     cv::Mat m_binarized;
     std::vector<std::vector<cv::Point>> m_contours;
+
     void filterContours();
 };
 

@@ -5,6 +5,23 @@
 #include <stdexcept>
 using namespace std;
 
+float perimeter(const std::vector<cv::Point2f>& a)
+{
+  float sum=0, dx, dy;
+
+  for (size_t i=0;i<a.size();i++)
+  {
+    size_t i2=(i+1) % a.size();
+
+    dx = a[i].x - a[i2].x;
+    dy = a[i].y - a[i2].y;
+
+    sum += sqrt(dx*dx + dy*dy);
+  }
+
+  return sum;
+}
+
 QVideoFilterRunnable* MarkerDetectorFilter::createFilterRunnable()
 {
     return new MarkerDetectorFilterRunnable(this);
@@ -36,9 +53,9 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
 
         MarksDetector marksDetector{};
 
-        cv::flip(grayscale, grayscale, 1);
         marksDetector.processFame(grayscale);
 
+        cv::flip(grayscale, grayscale, 1);
         cv::threshold(grayscale, binarized, 0, 255.0, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
         grayscaleToVideoFrame(frame, binarized, frameMat);
@@ -84,7 +101,7 @@ void MarksDetector::findContours()
     cv::waitKey(1);
 }
 
-void MarksDetector::findCandidates()
+std::vector<Marker> MarksDetector::findCandidates()
 {
     vector<cv::Point> approxCurve;
     vector<Marker> possibleMarkers;
@@ -130,18 +147,74 @@ void MarksDetector::findCandidates()
         // Sort the points in anti-clockwise order
         // Trace a line between the first and second point.
         // If the third point is at the right side, then the points are anti-clockwise
-        cv::Point v1 = m.points[1] - m.points[0];
-        cv::Point v2 = m.points[2] - m.points[0];
+        auto v1 = markerPoints[1] - markerPoints[0];
+        auto v2 = markerPoints[2] - markerPoints[0];
 
         double o = (v1.x * v2.y) - (v1.y * v2.x);
 
         if (o < 0.0)		 // if the third point is in the left side, then sort in anti-clockwise order
-            std::swap(m.points[1], m.points[3]);
-
+            std::swap(markerPoints[1], markerPoints[3]);
 
         possibleMarkers.emplace_back(m_binarized, markerPoints);
     }
 
+    // calculate the average distance of each corner to the nearest corner of the other marker candidate
+
+    std::vector< std::pair<int,int> > tooNearCandidates;
+    for (int i=0;i<possibleMarkers.size();i++)
+    {
+        const Marker& m1 = possibleMarkers[i];
+
+        //calculate the average distance of each corner to the nearest corner of the other marker candidate
+        for (int j=i+1;j<possibleMarkers.size();j++)
+        {
+            const Marker& m2 = possibleMarkers[j];
+
+            float distSquared = 0;
+
+            for (int c = 0; c < 4; c++)
+            {
+                auto v = m1.points()[c] - m2.points()[c];
+                distSquared += v.dot(v);
+            }
+
+            distSquared /= 4;
+
+            if (distSquared < 100)
+            {
+                tooNearCandidates.push_back(std::pair<int,int>(i,j));
+            }
+        }
+    }
+
+    // Mark for removal the element of the pair with smaller perimeter
+    std::vector<bool> removalMask (possibleMarkers.size(), false);
+
+    for (size_t i = 0; i < tooNearCandidates.size(); i++)
+    {
+        float p1 = perimeter(possibleMarkers[tooNearCandidates[i].first ].points());
+        float p2 = perimeter(possibleMarkers[tooNearCandidates[i].second].points());
+
+        size_t removalIndex;
+        if (p1 > p2)
+            removalIndex = tooNearCandidates[i].second;
+        else
+            removalIndex = tooNearCandidates[i].first;
+
+        removalMask[removalIndex] = true;
+    }
+
+    if (!possibleMarkers.empty())
+        qDebug() << "found " << possibleMarkers.size();
+
+    std::vector<Marker> detectedMarkers;
+    for (size_t i = 0; i < possibleMarkers.size(); i++)
+    {
+        if (!removalMask[i])
+            detectedMarkers.push_back(possibleMarkers[i]);
+    }
+
+    return detectedMarkers;
 }
 
 void MarksDetector::filterContours()
@@ -159,6 +232,7 @@ void MarksDetector::filterContours()
 }
 
 Marker::Marker(const cv::Mat& image, const std::vector<cv::Point2f> &points)
+    : m_points{points}
 {
     qDebug() << "Possible marker found!!!!" << endl;
 }
