@@ -31,12 +31,24 @@ private:
 class Marker {
 public:
     Marker(const cv::Mat& image, const std::vector<cv::Point2f>& points);
-    uint64_t id() const;
-    const std::vector<cv::Point2f> points() const noexcept { return m_points; }
+    uint64_t id() const noexcept { return m_id; }
 
 private:
-    uint64_t m_id;
+    cv::Mat checkFrame(const cv::Mat& image) const noexcept;
+    cv::Mat checkOrientationFrame(const cv::Mat& orientation) const noexcept;
+    bool decode();
+
+private:
+    cv::Mat m_image;
+    const cv::Size m_squareSize;
+    const int m_minArea;
     std::vector<cv::Point2f> m_points;
+    uint64_t m_id;
+};
+
+class MarkerNotFound : public std::exception {
+public:
+    const char* what() const noexcept { return "Marker not found"; };
 };
 
 class MarksDetector {
@@ -47,16 +59,22 @@ public:
     uint64_t encode() const;
 
 private:
-    void binarize(cv::Mat& grayscale);
+    void binarize(const cv::Mat &grayscale);
     void findContours();
-    std::vector<Marker> findCandidates();
+    void findCandidates();
+    void recognizeCandidates();
+
+    void filterContours();
 
 private:
     int m_minCountournSize;
     uint64_t m_id;
+    cv::Mat m_grayscale;
     cv::Mat m_binarized;
     std::vector<std::vector<cv::Point>> m_contours;
+    std::vector<std::vector<cv::Point2f>> m_possibleContours;
 
-    void filterContours();
+    const cv::Size m_markerSize;
+    std::vector<cv::Point3f> m_markerCorners3d;
+    std::vector<cv::Point2f> m_markerCorners2d;
 };
-
