@@ -32,11 +32,13 @@ class Marker {
 public:
     Marker(const cv::Mat& image, const std::vector<cv::Point2f>& points);
     uint64_t id() const noexcept { return m_id; }
+    void precisePoints(const std::vector<cv::Point2f>& points) noexcept;
+    void drawContours(cv::Mat& image, cv::Scalar color) const noexcept;
 
 private:
     cv::Mat checkFrame(const cv::Mat& image) const noexcept;
     cv::Mat checkOrientationFrame(const cv::Mat& orientation) const noexcept;
-    bool decode();
+    void encodeData(const cv::Mat& dataImage);
 
 private:
     cv::Mat m_image;

@@ -2,8 +2,11 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <QDebug>
+#include <boost/crc.hpp>
+#include <bitset>
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 using namespace string_literals;
@@ -56,10 +59,8 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
 
         MarksDetector marksDetector{};
 
-        cv::flip(grayscale, grayscale, 1);
+        cv::flip(grayscale, grayscale, 0);
         marksDetector.processFame(grayscale);
-
-//        cv::threshold(grayscale, binarized, 0, 255.0, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
         grayscaleToVideoFrame(frame, binarized, frameMat);
     }
@@ -149,7 +150,7 @@ void MarksDetector::findCandidates()
         if (minDist < 10000)
             continue;
 
-        qDebug() << "minDist is " << minDist;
+//        qDebug() << "minDist is " << minDist;
 
         // All tests are passed. Save marker candidate:
         vector<cv::Point2f> markerPoints;
@@ -158,22 +159,21 @@ void MarksDetector::findCandidates()
         for (int i = 0; i<4; i++)
             markerPoints.push_back( cv::Point2f(approxCurve[i].x,approxCurve[i].y) );
 
-        // Sort the points in anti-clockwise order
-        // Trace a line between the first and second point.
-        // If the third point is at the right side, then the points are anti-clockwise
-        auto v1 = markerPoints[1] - markerPoints[0];
-        auto v2 = markerPoints[2] - markerPoints[0];
+//        // Sort the points in anti-clockwise order
+//        // Trace a line between the first and second point.
+//        // If the third point is at the right side, then the points are anti-clockwise
+//        auto v1 = markerPoints[1] - markerPoints[0];
+//        auto v2 = markerPoints[2] - markerPoints[0];
 
-        double o = (v1.x * v2.y) - (v1.y * v2.x);
+//        double o = (v1.x * v2.y) - (v1.y * v2.x);
 
-        if (o < 0.0)		 // if the third point is in the left side, then sort in anti-clockwise order
-            std::swap(markerPoints[1], markerPoints[3]);
+//        if (o < 0.0)		 // if the third point is in the left side, then sort in anti-clockwise order
+//            std::swap(markerPoints[1], markerPoints[3]);
 
         possibleMarkerPoints.emplace_back(markerPoints);
     }
 
     // calculate the average distance of each corner to the nearest corner of the other marker candidate
-
     std::vector< std::pair<int,int> > tooNearCandidates;
     for (int i=0;i<possibleMarkerPoints.size();i++)
     {
@@ -216,8 +216,8 @@ void MarksDetector::findCandidates()
         removalMask[removalIndex] = true;
     }
 
-    if (!possibleMarkerPoints.empty())
-        qDebug() << "found " << possibleMarkerPoints.size();
+//    if (!possibleMarkerPoints.empty())
+//        qDebug() << "found " << possibleMarkerPoints.size();
 
     for (size_t i = 0; i < possibleMarkerPoints.size(); i++)
         if (!removalMask[i])
@@ -238,12 +238,27 @@ void MarksDetector::recognizeCandidates()
         cv::warpPerspective(m_grayscale, canonicalMarkerImage,  markerTransform, m_markerSize);
         cv::threshold(canonicalMarkerImage, canonicalMarkerImage, 0.0, 255.0f,
                       cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+//        cv::flip(canonicalMarkerImage, canonicalMarkerImage, -1);
+
         try
-        {
-            cv::imshow("canonical_"s + to_string(i), canonicalMarkerImage);
-            cv::waitKey(1);
+        {            
+//            cv::imshow("canonical_"s + to_string(i), canonicalMarkerImage);
+//            cv::waitKey(1);
             Marker m(canonicalMarkerImage.clone(), points);
 
+            cv::TermCriteria termCriteria = cv::TermCriteria{cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 30, 0.01};
+            cv::cornerSubPix(m_grayscale, points, cv::Size{5, 5}, cv::Size{-1, -1}, termCriteria);
+
+            cv::Mat image;
+            cv::cvtColor(m_grayscale, image, cv::COLOR_GRAY2BGR);
+            m.drawContours(image, cv::Scalar{255, 0, 0});
+
+            cv::imshow("image"s + to_string(i), image);
+            cv::waitKey(1);
+
+
+            m.precisePoints(points);
             ++i;
         }
         catch( const MarkerNotFound& exc)
@@ -278,17 +293,33 @@ Marker::Marker(const cv::Mat& image, const vector<cv::Point2f>& points)
     if (orientation.empty())
         throw MarkerNotFound{};
 
-    cv::imshow("orientation", orientation);
-    cv::waitKey(1);
+//    cv::imshow("orientation", orientation);
+//    cv::waitKey(1);
 
     auto data = checkOrientationFrame(orientation);
 
     if (data.empty())
         throw MarkerNotFound{};
 
-    cv::imshow("data", data);
-    cv::waitKey(1);
+//    cv::imshow("data", data);
+//    cv::waitKey(1);
 
+    encodeData(data);
+}
+
+void Marker::precisePoints(const std::vector<cv::Point2f>& points) noexcept
+{
+    m_points = points;
+}
+
+void Marker::drawContours(cv::Mat& image, cv::Scalar color) const noexcept
+{
+    float thickness = 2;
+
+    cv::line(image, m_points[0], m_points[1], color, thickness, CV_AA);
+    cv::line(image, m_points[1], m_points[2], color, thickness, CV_AA);
+    cv::line(image, m_points[2], m_points[3], color, thickness, CV_AA);
+    cv::line(image, m_points[3], m_points[0], color, thickness, CV_AA);
 }
 
 cv::Mat Marker::checkFrame(const cv::Mat& image) const noexcept
@@ -342,6 +373,7 @@ cv::Mat Marker::checkFrame(const cv::Mat& image) const noexcept
         if (nonZeros > m_minArea)
             return cv::Mat{};
     }
+
     // check leftLine
     for(int i = 0; i < squareCount; ++i)
     {
@@ -416,12 +448,149 @@ cv::Mat Marker::checkOrientationFrame(const cv::Mat& image) const noexcept
             ++whiteSquares;
     }
 
+
     if (whiteSquares == 3)
+    {
+        cv::Rect topLeftRect{
+            0, 0,
+            m_squareSize.width, m_squareSize.height
+        };
+        cv::Rect topRightRect{
+            image.cols - m_squareSize.width, 0,
+            m_squareSize.width, m_squareSize.height
+        };
+        cv::Rect bottomLeftRect{
+            0, image.rows - m_squareSize.height,
+            m_squareSize.width, m_squareSize.height
+        };
+        cv::Rect bottomRightRect{
+            image.cols - m_squareSize.width, image.rows - m_squareSize.height,
+            m_squareSize.width, m_squareSize.height
+        };
+
+        auto topLeftNonZeros = cv::countNonZero(image(topLeftRect));
+        auto topRightNonZeros = cv::countNonZero(image(topRightRect));
+        auto bottomLeftNonZeros = cv::countNonZero(image(bottomLeftRect));
+        auto bottomRightNonZeros = cv::countNonZero(image(bottomRightRect));
+
+        auto bottomRight = bottomRightNonZeros > m_minArea ? 1 : 0;
+        auto topLeft = topLeftNonZeros > m_minArea ? 2 : 0;
+        auto topRight = topRightNonZeros > m_minArea ? 4 : 0;
+        auto bottomLeft = bottomLeftNonZeros > m_minArea ? 8 : 0;
+
+        int rotation = bottomLeft | topLeft | topRight | bottomRight;
+//        qDebug() << "rotation code is: " << rotation;
+
+        switch (rotation) {
+        case 7:     // 90 degree
+        {
+            auto M = cv::getRotationMatrix2D(
+                cv::Point2f{m_image.cols / 2.0f, m_image.rows / 2.0f},
+                90.0, 1.0
+            );
+            cv::Mat rotatedImage;
+            cv::warpAffine(m_image, m_image, M, m_image.size());
+
+            cv::imshow("rotatedImage", m_image);
+            cv::waitKey(1);
+            break;
+        }
+        case 13:     // 180 degree
+        {
+            auto M = cv::getRotationMatrix2D(
+                cv::Point2f{m_image.cols / 2.0f, m_image.rows / 2.0f},
+                180.0, 1.0
+            );
+            cv::Mat rotatedImage;
+            cv::warpAffine(m_image, m_image, M, m_image.size());
+
+            cv::imshow("rotatedImage", m_image);
+            cv::waitKey(1);
+            break;
+        }
+        case 11:     // -90 degree
+        {
+            auto M = cv::getRotationMatrix2D(
+                cv::Point2f{m_image.cols / 2.0f, m_image.rows / 2.0f},
+                -90.0, 1.0
+            );
+            cv::Mat rotatedImage;
+            cv::warpAffine(m_image, m_image, M, m_image.size());
+
+            cv::imshow("rotatedImage", m_image);
+            cv::waitKey(1);
+            break;
+        }
+
+        case 14: // 0
+            break;
+
+        default:
+            return cv::Mat{};
+        }
+
         return image(cv::Rect{
             m_squareSize.width, m_squareSize.height,
             image.cols - (2*m_squareSize.width), image.rows - (2*m_squareSize.height)
             });
+
+    }
     else
         return cv::Mat{};
 }
 
+void Marker::encodeData(const cv::Mat& dataImage)
+{
+    const auto& onlyDataImage = dataImage(
+                                    cv::Rect{
+                                        0, 0,
+                                        dataImage.cols, m_squareSize.height * 6
+                                    }
+                                    );
+
+    bitset<6*8> dataBits;
+
+    for (int i = 0; i < 6; ++i)
+    {
+        cv::Rect lineRect{0, m_squareSize.height * i, dataImage.cols, m_squareSize.height};
+        const auto& line =  onlyDataImage(lineRect);
+
+        for (int j = 0; j < 8; ++j)
+        {
+            cv::Rect square{m_squareSize.width * j, 0, m_squareSize.width, m_squareSize.height};
+            auto bit = cv::countNonZero(line(square)) > m_minArea ? 1 : 0;
+            dataBits[i*8 + j] = bit;
+        }
+    }
+
+    m_id = dataBits.to_ullong();
+
+    const auto& onlyCRCImage = dataImage(
+                                   cv::Rect{
+                                       0, m_squareSize.height * 6,
+                                       dataImage.cols, m_squareSize.height * 2
+                                   });
+
+    bitset<2*8> crcBits;
+
+    for (int i = 0; i < 2; ++i)
+    {
+        cv::Rect lineRect{0, m_squareSize.height * i, onlyCRCImage.cols, m_squareSize.height};
+        const auto& line =  onlyCRCImage(lineRect);
+
+        for (int j = 0; j < 8; ++j)
+        {
+            cv::Rect square{m_squareSize.width * j, 0, m_squareSize.width, m_squareSize.height};
+            auto bit = cv::countNonZero(line(square)) > m_minArea ? 1 : 0;
+            crcBits[i*8 + j] = bit;
+        }
+    }
+
+    boost::crc_16_type crc;
+    crc.process_bytes(&m_id, sizeof(m_id));
+
+    if (crcBits.to_ullong() != crc.checksum())
+        throw MarkerNotFound{};
+
+    qDebug() << "Found target ID: " << m_id;
+}
