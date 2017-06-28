@@ -68,6 +68,9 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
 
         for(const Marker& marker : marksDetector.markers())
             marker.drawContours(frameMat, cv::Scalar{0, 255, 0});
+
+
+        cv::flip(frameMat, frameMat, 0);
     }
     catch(const std::exception& exc)
     {
