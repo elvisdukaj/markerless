@@ -1,6 +1,7 @@
 #include "markerdetectorfilter.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/calib3d.hpp>
 #include <QDebug>
 #include <boost/crc.hpp>
 #include <bitset>
@@ -244,11 +245,24 @@ void MarksDetector::recognizeCandidates()
             m.drawContours(image, cv::Scalar{255, 0, 0});
 
             m.precisePoints(points);
+
+            cv::Mat Rvec;
+            cv::Mat_<float> Tvec;
+            cv::Mat raux,taux;
+            cv::solvePnP(m_markerCorners3d, m.points(), m_calibration.instrinsic(), m_calibration.distortion(), raux, taux);
+            raux.convertTo(Rvec, CV_32F);
+            taux.convertTo(Tvec, CV_32F);
+
+            cv::Mat_<float> rotMat(3,3);
+            cv::Rodrigues(Rvec, rotMat);
+
+            Eigen::Vector4f traslation;
+            Eigen::Matrix3f rotation;
+
             m_markers.push_back(m);
         }
         catch( const MarkerNotFound&)
         {
-//            qDebug() << exc.what();
         }
     }
 }

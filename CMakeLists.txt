@@ -14,6 +14,10 @@ find_package(Boost REQUIRED)
 include_directories(include)
 include_directories(${Boost_INCLUDE_DIRS})
 
+if(WIN32)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif(WIN32)
+
 file(GLOB HEADERS_FILES "include/*.h*")
 file(GLOB RESOURCES_FILES "resource/*.qrc")
 file(GLOB SOURCE_FILES "src/*.cpp")

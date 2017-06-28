@@ -1,6 +1,7 @@
 #pragma once
 
 #include "abstractopencvrunnablefilter.h"
+#include "cameracalibration.h"
 #include <opencv2/core.hpp>
 
 class MarkerDetectorFilter : public QAbstractVideoFilter {
@@ -32,6 +33,7 @@ class Marker {
 public:
     Marker(const cv::Mat& image, const std::vector<cv::Point2f>& points);
     uint64_t id() const noexcept { return m_id; }
+    const std::vector<cv::Point2f>& points() const noexcept { return m_points; }
     void precisePoints(const std::vector<cv::Point2f>& points) noexcept;
     void drawContours(cv::Mat& image, cv::Scalar color) const noexcept;
 
@@ -41,7 +43,6 @@ private:
     void encodeData(const cv::Mat& dataImage);
 
 private:
-//    cv::Mat m_image;
     const cv::Size m_squareSize;
     const int m_minArea;
     std::vector<cv::Point2f> m_points;
@@ -50,7 +51,7 @@ private:
 
 class MarkerNotFound : public std::exception {
 public:
-    const char* what() const noexcept { return "Marker not found"; };
+    const char* what() const noexcept { return "Marker not found"; }
 };
 
 class MarksDetector {
@@ -82,4 +83,6 @@ private:
     std::vector<cv::Point3f> m_markerCorners3d;
     std::vector<cv::Point2f> m_markerCorners2d;
     std::vector<Marker> m_markers;
+
+    CameraCalibration m_calibration;
 };
