@@ -58,19 +58,10 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
         videoFrameInGrayScaleAndColor(frame, grayscale, frameMat);
 
         MarksDetector marksDetector{};
-
-        cv::flip(grayscale, grayscale, 0);
         marksDetector.processFame(grayscale);
-
-//        grayscaleToVideoFrame(frame, binarized, frameMat);
-
-        cv::flip(frameMat, frameMat, 0);
 
         for(const Marker& marker : marksDetector.markers())
             marker.drawContours(frameMat, cv::Scalar{0, 255, 0});
-
-
-        cv::flip(frameMat, frameMat, 0);
     }
     catch(const std::exception& exc)
     {
@@ -115,19 +106,13 @@ const std::vector<Marker> &MarksDetector::markers() const noexcept
 
 void MarksDetector::binarize(const cv::Mat& grayscale)
 {
-    m_grayscale = grayscale.clone();
+    m_grayscale = grayscale;
     cv::threshold(m_grayscale, m_binarized, 127, 255.0, cv::THRESH_BINARY /*| cv::THRESH_OTSU*/);
 }
 
 void MarksDetector::findContours()
 {
     cv::findContours(m_binarized, m_contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
-    //    filterContours();
-    cv::Mat contousImage(m_binarized.size(), CV_8UC3, cv::Scalar{255, 255, 255});
-//    cv::drawContours(contousImage, m_contours, -1, cv::Scalar{255});
-//    cv::flip(contousImage, contousImage, -1);
-//    cv::imshow("Contours", contousImage);
-//    cv::waitKey(1);
 }
 
 void MarksDetector::findCandidates()
@@ -161,10 +146,8 @@ void MarksDetector::findCandidates()
         }
 
         // Check that distance is not very small
-        if (minDist < 10000)
+        if (minDist < 500)
             continue;
-
-//        qDebug() << "minDist is " << minDist;
 
         // All tests are passed. Save marker candidate:
         vector<cv::Point2f> markerPoints;
@@ -230,9 +213,6 @@ void MarksDetector::findCandidates()
         removalMask[removalIndex] = true;
     }
 
-//    if (!possibleMarkerPoints.empty())
-//        qDebug() << "found " << possibleMarkerPoints.size();
-
     for (size_t i = 0; i < possibleMarkerPoints.size(); i++)
         if (!removalMask[i])
             m_possibleContours.push_back(possibleMarkerPoints[i]);
@@ -240,7 +220,6 @@ void MarksDetector::findCandidates()
 
 void MarksDetector::recognizeCandidates()
 {
-//    int i = 0;
     for(auto& points: m_possibleContours)
     {
         cv::Mat canonicalMarkerImage;
@@ -253,12 +232,8 @@ void MarksDetector::recognizeCandidates()
         cv::threshold(canonicalMarkerImage, canonicalMarkerImage, 0.0, 255.0f,
                       cv::THRESH_BINARY | cv::THRESH_OTSU);
 
-//        cv::flip(canonicalMarkerImage, canonicalMarkerImage, -1);
-
         try
         {            
-//            cv::imshow("canonical_"s + to_string(i), canonicalMarkerImage);
-//            cv::waitKey(1);
             Marker m(canonicalMarkerImage.clone(), points);
 
             cv::TermCriteria termCriteria = cv::TermCriteria{cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 30, 0.01};
@@ -268,16 +243,12 @@ void MarksDetector::recognizeCandidates()
             cv::cvtColor(m_grayscale, image, cv::COLOR_GRAY2BGR);
             m.drawContours(image, cv::Scalar{255, 0, 0});
 
-//            cv::imshow("image"s + to_string(i), image);
-//            cv::waitKey(1);
-
             m.precisePoints(points);
             m_markers.push_back(m);
-//            ++i;
         }
-        catch( const MarkerNotFound& exc)
+        catch( const MarkerNotFound&)
         {
-            qDebug() << exc.what();
+//            qDebug() << exc.what();
         }
     }
 }
@@ -297,7 +268,6 @@ void MarksDetector::filterContours()
 }
 
 Marker::Marker(const cv::Mat& image, const vector<cv::Point2f>& points)
-//    : m_image(image)
     : m_squareSize{image.size() / 12}
     , m_minArea{m_squareSize.area() / 2}
     , m_points{points}
@@ -307,16 +277,12 @@ Marker::Marker(const cv::Mat& image, const vector<cv::Point2f>& points)
     if (orientation.empty())
         throw MarkerNotFound{};
 
-//    cv::imshow("orientation", orientation);
-//    cv::waitKey(1);
-
     auto data = checkOrientationFrame(orientation);
 
     if (data.empty())
         throw MarkerNotFound{};
 
-//    cv::imshow("data", data);
-//    cv::waitKey(1);
+    cv::imshow("data", data);
 
     encodeData(data);
 }
@@ -422,7 +388,7 @@ cv::Mat Marker::checkFrame(const cv::Mat& image) const noexcept
 
 cv::Mat Marker::checkOrientationFrame(const cv::Mat& image) const noexcept
 {
-    cv::Mat rotated = image.clone();
+    cv::Mat rotated;
 
     const cv::Rect topLineRect{
         0, 0,
@@ -495,46 +461,30 @@ cv::Mat Marker::checkOrientationFrame(const cv::Mat& image) const noexcept
         auto bottomLeft = bottomLeftNonZeros > m_minArea ? 8 : 0;
 
         int rotation = bottomLeft | topLeft | topRight | bottomRight;
-        qDebug() << "rotation code is: " << rotation;
+//        qDebug() << "rotation code is: " << rotation;
 
         switch (rotation) {
-        case 7:     // 90 degree
-        {
-            auto M = cv::getRotationMatrix2D(
-                cv::Point2f{image.cols / 2.0f, image.rows / 2.0f},
-                90.0, 1.0
-            );
-            cv::warpAffine(image, rotated, M, image.size());
+        case 7:
+            cv::flip(image, rotated, 1);
             break;
-        }
-        case 13:     // 180 degree
-        {
-            auto M = cv::getRotationMatrix2D(
-                cv::Point2f{image.cols / 2.0f, image.rows / 2.0f},
-                180.0, 1.0
-            );
-            cv::warpAffine(image, rotated, M, rotated.size());
-            break;
-        }
-        case 11:     // -90 degree
-        {
-            auto M = cv::getRotationMatrix2D(
-                cv::Point2f{image.cols / 2.0f, rotated.rows / 2.0f},
-                -90.0, 1.0
-            );
-            cv::warpAffine(image, rotated, M, rotated.size());
-            break;
-        }
 
-        case 14: // 0
+        case 13:
+            cv::rotate(image, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+            cv::flip(rotated, rotated, 1);
+            break;
+
+        case 11:
+            cv::flip(image, rotated, 0);
+            break;
+
+        case 14:
+            cv::rotate(image, rotated, cv::ROTATE_90_CLOCKWISE);
+            cv::flip(rotated, rotated, 1);
             break;
 
         default:
             return cv::Mat{};
         }
-
-//        cv::imshow("rotatedImage11", rotated);
-//        cv::waitKey(1);
 
         return rotated(cv::Rect{
             m_squareSize.width, m_squareSize.height,
