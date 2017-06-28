@@ -41,7 +41,7 @@ private:
     void encodeData(const cv::Mat& dataImage);
 
 private:
-    cv::Mat m_image;
+//    cv::Mat m_image;
     const cv::Size m_squareSize;
     const int m_minArea;
     std::vector<cv::Point2f> m_points;
@@ -59,6 +59,8 @@ public:
 
     void processFame(cv::Mat& grayscale);
     uint64_t encode() const;
+
+    const std::vector<Marker>& markers() const noexcept;
 
 private:
     void binarize(const cv::Mat &grayscale);
@@ -79,4 +81,5 @@ private:
     const cv::Size m_markerSize;
     std::vector<cv::Point3f> m_markerCorners3d;
     std::vector<cv::Point2f> m_markerCorners2d;
+    std::vector<Marker> m_markers;
 };

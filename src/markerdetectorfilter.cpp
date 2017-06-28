@@ -54,7 +54,7 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
 
     try
     {
-        cv::Mat frameMat, grayscale, binarized;
+        cv::Mat frameMat, grayscale;
         videoFrameInGrayScaleAndColor(frame, grayscale, frameMat);
 
         MarksDetector marksDetector{};
@@ -62,7 +62,12 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
         cv::flip(grayscale, grayscale, 0);
         marksDetector.processFame(grayscale);
 
-        grayscaleToVideoFrame(frame, binarized, frameMat);
+//        grayscaleToVideoFrame(frame, binarized, frameMat);
+
+        cv::flip(frameMat, frameMat, 0);
+
+        for(const Marker& marker : marksDetector.markers())
+            marker.drawContours(frameMat, cv::Scalar{0, 255, 0});
     }
     catch(const std::exception& exc)
     {
@@ -97,6 +102,12 @@ void MarksDetector::processFame(cv::Mat& grayscale)
     findContours();
     findCandidates();
     recognizeCandidates();
+
+}
+
+const std::vector<Marker> &MarksDetector::markers() const noexcept
+{
+    return m_markers;
 }
 
 void MarksDetector::binarize(const cv::Mat& grayscale)
@@ -159,16 +170,16 @@ void MarksDetector::findCandidates()
         for (int i = 0; i<4; i++)
             markerPoints.push_back( cv::Point2f(approxCurve[i].x,approxCurve[i].y) );
 
-//        // Sort the points in anti-clockwise order
-//        // Trace a line between the first and second point.
-//        // If the third point is at the right side, then the points are anti-clockwise
-//        auto v1 = markerPoints[1] - markerPoints[0];
-//        auto v2 = markerPoints[2] - markerPoints[0];
+        // Sort the points in anti-clockwise order
+        // Trace a line between the first and second point.
+        // If the third point is at the right side, then the points are anti-clockwise
+        auto v1 = markerPoints[1] - markerPoints[0];
+        auto v2 = markerPoints[2] - markerPoints[0];
 
-//        double o = (v1.x * v2.y) - (v1.y * v2.x);
+        double o = (v1.x * v2.y) - (v1.y * v2.x);
 
-//        if (o < 0.0)		 // if the third point is in the left side, then sort in anti-clockwise order
-//            std::swap(markerPoints[1], markerPoints[3]);
+        if (o < 0.0)		 // if the third point is in the left side, then sort in anti-clockwise order
+            std::swap(markerPoints[1], markerPoints[3]);
 
         possibleMarkerPoints.emplace_back(markerPoints);
     }
@@ -226,7 +237,7 @@ void MarksDetector::findCandidates()
 
 void MarksDetector::recognizeCandidates()
 {
-    int i = 0;
+//    int i = 0;
     for(auto& points: m_possibleContours)
     {
         cv::Mat canonicalMarkerImage;
@@ -254,12 +265,12 @@ void MarksDetector::recognizeCandidates()
             cv::cvtColor(m_grayscale, image, cv::COLOR_GRAY2BGR);
             m.drawContours(image, cv::Scalar{255, 0, 0});
 
-            cv::imshow("image"s + to_string(i), image);
-            cv::waitKey(1);
-
+//            cv::imshow("image"s + to_string(i), image);
+//            cv::waitKey(1);
 
             m.precisePoints(points);
-            ++i;
+            m_markers.push_back(m);
+//            ++i;
         }
         catch( const MarkerNotFound& exc)
         {
@@ -283,12 +294,12 @@ void MarksDetector::filterContours()
 }
 
 Marker::Marker(const cv::Mat& image, const vector<cv::Point2f>& points)
-    : m_image(image)
-    , m_squareSize{m_image.size() / 12}
+//    : m_image(image)
+    : m_squareSize{image.size() / 12}
     , m_minArea{m_squareSize.area() / 2}
     , m_points{points}
 {
-    auto orientation = checkFrame(m_image);
+    auto orientation = checkFrame(image);
 
     if (orientation.empty())
         throw MarkerNotFound{};
@@ -408,6 +419,8 @@ cv::Mat Marker::checkFrame(const cv::Mat& image) const noexcept
 
 cv::Mat Marker::checkOrientationFrame(const cv::Mat& image) const noexcept
 {
+    cv::Mat rotated = image.clone();
+
     const cv::Rect topLineRect{
         0, 0,
         image.cols, m_squareSize.height
@@ -479,46 +492,34 @@ cv::Mat Marker::checkOrientationFrame(const cv::Mat& image) const noexcept
         auto bottomLeft = bottomLeftNonZeros > m_minArea ? 8 : 0;
 
         int rotation = bottomLeft | topLeft | topRight | bottomRight;
-//        qDebug() << "rotation code is: " << rotation;
+        qDebug() << "rotation code is: " << rotation;
 
         switch (rotation) {
         case 7:     // 90 degree
         {
             auto M = cv::getRotationMatrix2D(
-                cv::Point2f{m_image.cols / 2.0f, m_image.rows / 2.0f},
+                cv::Point2f{image.cols / 2.0f, image.rows / 2.0f},
                 90.0, 1.0
             );
-            cv::Mat rotatedImage;
-            cv::warpAffine(m_image, m_image, M, m_image.size());
-
-            cv::imshow("rotatedImage", m_image);
-            cv::waitKey(1);
+            cv::warpAffine(image, rotated, M, image.size());
             break;
         }
         case 13:     // 180 degree
         {
             auto M = cv::getRotationMatrix2D(
-                cv::Point2f{m_image.cols / 2.0f, m_image.rows / 2.0f},
+                cv::Point2f{image.cols / 2.0f, image.rows / 2.0f},
                 180.0, 1.0
             );
-            cv::Mat rotatedImage;
-            cv::warpAffine(m_image, m_image, M, m_image.size());
-
-            cv::imshow("rotatedImage", m_image);
-            cv::waitKey(1);
+            cv::warpAffine(image, rotated, M, rotated.size());
             break;
         }
         case 11:     // -90 degree
         {
             auto M = cv::getRotationMatrix2D(
-                cv::Point2f{m_image.cols / 2.0f, m_image.rows / 2.0f},
+                cv::Point2f{image.cols / 2.0f, rotated.rows / 2.0f},
                 -90.0, 1.0
             );
-            cv::Mat rotatedImage;
-            cv::warpAffine(m_image, m_image, M, m_image.size());
-
-            cv::imshow("rotatedImage", m_image);
-            cv::waitKey(1);
+            cv::warpAffine(image, rotated, M, rotated.size());
             break;
         }
 
@@ -529,7 +530,10 @@ cv::Mat Marker::checkOrientationFrame(const cv::Mat& image) const noexcept
             return cv::Mat{};
         }
 
-        return image(cv::Rect{
+//        cv::imshow("rotatedImage11", rotated);
+//        cv::waitKey(1);
+
+        return rotated(cv::Rect{
             m_squareSize.width, m_squareSize.height,
             image.cols - (2*m_squareSize.width), image.rows - (2*m_squareSize.height)
             });
@@ -590,7 +594,11 @@ void Marker::encodeData(const cv::Mat& dataImage)
     crc.process_bytes(&m_id, sizeof(m_id));
 
     if (crcBits.to_ullong() != crc.checksum())
+    {
+        qDebug() << "CRC Mismatch found " << dataBits.to_ullong() << " with crc "
+                 << crcBits.to_ullong() << " calculated " << crc.checksum();
         throw MarkerNotFound{};
+    }
 
     qDebug() << "Found target ID: " << m_id;
 }

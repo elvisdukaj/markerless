@@ -37,7 +37,7 @@ void AbstractVideoFilterRunnable::videoFrameInGrayScaleAndColor(QVideoFrame* fra
     }
 }
 
-void AbstractVideoFilterRunnable::grayscaleToVideoFrame(QVideoFrame *frame, const cv::Mat& grayscale, cv::Mat& frameMat) const
+void AbstractVideoFilterRunnable::grayscaleToVideoFrame(QVideoFrame* frame, const cv::Mat& grayscale, cv::Mat& frameMat) const
 {
     switch (frame->pixelFormat()) {
     case QVideoFrame::Format_RGB32:
