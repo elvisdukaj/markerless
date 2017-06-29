@@ -61,8 +61,15 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
         MarksDetector marksDetector{};
         marksDetector.processFame(grayscale);
 
-        for(const Marker& marker : marksDetector.markers())
-            marker.drawContours(frameMat, cv::Scalar{0, 255, 0});
+
+        if (!marksDetector.markers().empty())
+        {
+            for(const Marker& marker : marksDetector.markers())
+                marker.drawContours(frameMat, cv::Scalar{0, 255, 0});
+
+            auto idStr = to_string(marksDetector.markers()[0].id());
+            emit m_filter->markerFound(QString::fromStdString(idStr));
+        }
     }
     catch(const std::exception& exc)
     {
@@ -97,7 +104,6 @@ void MarksDetector::processFame(cv::Mat& grayscale)
     findContours();
     findCandidates();
     recognizeCandidates();
-
 }
 
 const std::vector<Marker> &MarksDetector::markers() const noexcept
@@ -233,40 +239,37 @@ void MarksDetector::recognizeCandidates()
         cv::threshold(canonicalMarkerImage, canonicalMarkerImage, 0.0, 255.0f,
                       cv::THRESH_BINARY | cv::THRESH_OTSU);
 
-        try
-        {            
-            Marker m(canonicalMarkerImage.clone(), points);
+        Marker m(canonicalMarkerImage.clone(), points);
 
-            cv::TermCriteria termCriteria = cv::TermCriteria{cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 30, 0.01};
-            cv::cornerSubPix(m_grayscale, points, cv::Size{5, 5}, cv::Size{-1, -1}, termCriteria);
+        if (!m.isValid())
+            continue;
 
-            cv::Mat image;
-            cv::cvtColor(m_grayscale, image, cv::COLOR_GRAY2BGR);
-            m.drawContours(image, cv::Scalar{255, 0, 0});
+        cv::TermCriteria termCriteria = cv::TermCriteria{cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 30, 0.01};
+        cv::cornerSubPix(m_grayscale, points, cv::Size{5, 5}, cv::Size{-1, -1}, termCriteria);
 
-            m.precisePoints(points);
+        cv::Mat image;
+        cv::cvtColor(m_grayscale, image, cv::COLOR_GRAY2BGR);
+        m.drawContours(image, cv::Scalar{255, 0, 0});
 
-            cv::Mat Rvec;
-            cv::Mat_<float> Tvec;
-            cv::Mat raux,taux;
-            cv::solvePnP(
-                        m_markerCorners3d, m.points(), m_calibration.instrinsic(), m_calibration.distortion(),
-                        raux, taux
-                        );
-            raux.convertTo(Rvec, CV_32F);
-            taux.convertTo(Tvec, CV_32F);
+        m.precisePoints(points);
 
-            cv::Mat_<float> rotMat(3,3);
-            cv::Rodrigues(Rvec, rotMat);
+        cv::Mat Rvec;
+        cv::Mat_<float> Tvec;
+        cv::Mat raux,taux;
+        cv::solvePnP(
+                    m_markerCorners3d, m.points(), m_calibration.instrinsic(), m_calibration.distortion(),
+                    raux, taux
+                    );
+        raux.convertTo(Rvec, CV_32F);
+        taux.convertTo(Tvec, CV_32F);
 
-            Eigen::Vector4f traslation;
-            Eigen::Matrix3f rotation;
+        cv::Mat_<float> rotMat(3,3);
+        cv::Rodrigues(Rvec, rotMat);
 
-            m_markers.push_back(m);
-        }
-        catch( const MarkerNotFound&)
-        {
-        }
+        Eigen::Vector4f traslation;
+        Eigen::Matrix3f rotation;
+
+        m_markers.push_back(m);
     }
 }
 
@@ -287,17 +290,18 @@ void MarksDetector::filterContours()
 Marker::Marker(const cv::Mat& image, const vector<cv::Point2f>& points)
     : m_squareSize{image.size() / 12}
     , m_minArea{m_squareSize.area() / 2}
+    , m_isValid{false}
     , m_points{points}
 {
     auto orientation = checkFrame(image);
 
     if (orientation.empty())
-        throw MarkerNotFound{};
+        return;
 
     auto data = checkOrientationFrame(orientation);
 
     if (data.empty())
-        throw MarkerNotFound{};
+        return;
 
 //    cv::imshow("data", data);
 
@@ -567,8 +571,10 @@ void Marker::encodeData(const cv::Mat& dataImage)
     {
         qDebug() << "CRC Mismatch found " << dataBits.to_ullong() << " with crc "
                  << crcBits.to_ullong() << " calculated " << crc.checksum();
-        throw MarkerNotFound{};
+        return;
     }
+
+    m_isValid = true;
 
 //    qDebug() << "Found target ID: " << m_id;
 }

@@ -17,6 +17,10 @@ ApplicationWindow {
 
     MarkerDetectorFilter {
         id: markerDetectorFilter
+
+        onMarkerFound: {
+            markerID.text = id;
+        }
     }
 
     Timer {
@@ -38,5 +42,24 @@ ApplicationWindow {
 
         focus : visible // to receive focus and capture key events when visible
         filters: [markerDetectorFilter]
+    }
+
+    Rectangle {
+        anchors.right: parent.right
+        anchors.top: parent.top
+
+        color: "black"
+
+        width: 100
+        height: 20
+
+        opacity: 0.5
+
+        Label {
+            id: markerID
+            anchors.fill: parent
+            color: "white"
+            text: ""
+        }
     }
 }

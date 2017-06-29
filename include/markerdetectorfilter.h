@@ -11,13 +11,10 @@ public:
     QVideoFilterRunnable* createFilterRunnable() override;
 
 signals:
-    void thresholdChanged();
+    void markerFound(QString id);
 
 private:
     friend class ThresholdFilterRunnable;
-
-private:
-    int m_threshold = 128;
 };
 
 class MarkerDetectorFilterRunnable : public AbstractVideoFilterRunnable {
@@ -32,6 +29,8 @@ private:
 class Marker {
 public:
     Marker(const cv::Mat& image, const std::vector<cv::Point2f>& points);
+
+    bool isValid() const noexcept { return m_isValid; }
     uint64_t id() const noexcept { return m_id; }
     const std::vector<cv::Point2f>& points() const noexcept { return m_points; }
     void precisePoints(const std::vector<cv::Point2f>& points) noexcept;
@@ -45,13 +44,9 @@ private:
 private:
     const cv::Size m_squareSize;
     const int m_minArea;
+    bool m_isValid;
     std::vector<cv::Point2f> m_points;
     uint64_t m_id;
-};
-
-class MarkerNotFound : public std::exception {
-public:
-    const char* what() const noexcept { return "Marker not found"; }
 };
 
 class MarksDetector {
