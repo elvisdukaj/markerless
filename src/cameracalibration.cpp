@@ -11,7 +11,7 @@ CameraCalibration::CameraCalibration()
     };
 
     cv::Mat distMat(1, 4, CV_32F, dist);
-    cv::Mat intrMat(1, 4, CV_32F, intr);
+    cv::Mat intrMat(3, 3, CV_32F, intr);
 
     distMat.copyTo(m_distortion);
     intrMat.copyTo(m_intrinsic);

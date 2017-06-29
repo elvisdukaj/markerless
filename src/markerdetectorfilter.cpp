@@ -249,7 +249,10 @@ void MarksDetector::recognizeCandidates()
             cv::Mat Rvec;
             cv::Mat_<float> Tvec;
             cv::Mat raux,taux;
-            cv::solvePnP(m_markerCorners3d, m.points(), m_calibration.instrinsic(), m_calibration.distortion(), raux, taux);
+            cv::solvePnP(
+                        m_markerCorners3d, m.points(), m_calibration.instrinsic(), m_calibration.distortion(),
+                        raux, taux
+                        );
             raux.convertTo(Rvec, CV_32F);
             taux.convertTo(Tvec, CV_32F);
 
@@ -296,7 +299,7 @@ Marker::Marker(const cv::Mat& image, const vector<cv::Point2f>& points)
     if (data.empty())
         throw MarkerNotFound{};
 
-    cv::imshow("data", data);
+//    cv::imshow("data", data);
 
     encodeData(data);
 }
@@ -308,7 +311,7 @@ void Marker::precisePoints(const std::vector<cv::Point2f>& points) noexcept
 
 void Marker::drawContours(cv::Mat& image, cv::Scalar color) const noexcept
 {
-    float thickness = 2;
+    float thickness = 1;
 
     cv::line(image, m_points[0], m_points[1], color, thickness, CV_AA);
     cv::line(image, m_points[1], m_points[2], color, thickness, CV_AA);
@@ -567,5 +570,5 @@ void Marker::encodeData(const cv::Mat& dataImage)
         throw MarkerNotFound{};
     }
 
-    qDebug() << "Found target ID: " << m_id;
+//    qDebug() << "Found target ID: " << m_id;
 }
