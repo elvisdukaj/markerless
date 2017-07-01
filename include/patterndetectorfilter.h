@@ -6,17 +6,23 @@
 class PatternDetectorFilter : public QAbstractVideoFilter {
     Q_OBJECT
 
+    Q_PROPERTY(int showMatches READ showMatches WRITE showMatches)
+    Q_PROPERTY(int patternFound NOTIFY patternFound)
 public:
     QVideoFilterRunnable* createFilterRunnable() override;
 
+    int showMatches() const noexcept { return m_showMatch; }
+    void showMatches(int show) noexcept { m_showMatch = show; }
+
 signals:
-    void objectFound();
+    void patternFound(int keypoints);
 
 private:
     friend class ObjectFilterRunnable;
 
 private:
     QString m_patternImageFilename;
+    bool m_showMatch;
 };
 
 class PatternDetectorFilterRunnable : public AbstractVideoFilterRunnable {

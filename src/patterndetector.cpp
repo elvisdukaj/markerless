@@ -34,12 +34,9 @@ inline cv::Mat getMatchesImage(cv::Mat query, cv::Mat pattern, const std::vector
 }
 
 PatternDetector::PatternDetector()
-//    : m_detector{ORB::create(1000)}
-//    , m_extractor{xfeatures2d::FREAK::create(false, false)}
-    : m_detector{xfeatures2d::SURF::create(400)}
-//    , m_extractor{xfeatures2d::SURF::create()}
-//    , m_matcher{BFMatcher::create(NORM_HAMMING, true)}
-    , m_matcher{FlannBasedMatcher::create()}
+    : m_detector{ORB::create(1000)}
+    , m_extractor{xfeatures2d::FREAK::create(false, false)}
+    , m_matcher{BFMatcher::create(NORM_HAMMING, true)}
 {
 }
 
@@ -79,7 +76,7 @@ void PatternDetector::train(const Pattern& pattern)
     m_matcher->train();
 }
 
-bool PatternDetector::findPattern(const Mat& grayscale)
+int PatternDetector::findPattern(const Mat& grayscale, bool showMatches)
 {
     extractFeatures(grayscale, m_queryKeyPoints, m_queryDescriptor);
     m_matches = getMatches(m_queryDescriptor);
@@ -87,18 +84,15 @@ bool PatternDetector::findPattern(const Mat& grayscale)
     if (m_matches.empty())
         return false;
 
-    auto homographyFound = refineMatchesWithHomography(
+    auto foundKeys = refineMatchesWithHomography(
                 m_queryKeyPoints,
                 m_pattern.keypoints,
                 3.0f,
                 m_matches,
-                m_roughHomography,
-                m_queryDescriptor
+                m_roughHomography
                 );
 
-//    qDebug() << "homography found: " << homographyFound;
-
-    if (homographyFound)
+    if (foundKeys && showMatches)
     {
         Mat image = getMatchesImage(
                     grayscale, m_pattern.image,
@@ -106,16 +100,12 @@ bool PatternDetector::findPattern(const Mat& grayscale)
                     m_pattern.keypoints,
                     m_matches,
                     100);
+
         imshow("matches", image);
         waitKey(1);
     }
 
-//    Mat image;
-//    drawKeypoints(grayscale, m_queryKeyPoints, image);
-//    imshow("image", image);
-//    waitKey(1);
-
-    return true;
+    return foundKeys;
 }
 
 bool PatternDetector::extractFeatures(
@@ -123,7 +113,6 @@ bool PatternDetector::extractFeatures(
         vector<KeyPoint>& keypoints,
         Mat& descriptor)
 {
-
     m_detector->detectAndCompute(grayImage, Mat(), keypoints, descriptor);
     return true;
 
@@ -147,21 +136,18 @@ vector<DMatch> PatternDetector::getMatches(const Mat& queryDescriptors)
     return matches;
 }
 
-bool PatternDetector::refineMatchesWithHomography(
+int PatternDetector::refineMatchesWithHomography(
         const std::vector<KeyPoint>& queryKeyPoints,
         const std::vector<KeyPoint>& trainKeyPoints,
         float reprojectionThreshold,
         std::vector<DMatch>& matches,
-        Mat& homography,
-        Mat& descriptors)
+        Mat& homography)
 {
-    const int minNumberMatchesAllowed = 12;
+    const int minNumberMatchesAllowed = 13;
 
+    qDebug() << "FIRST found " << matches.size() << "keypoints";
     if (matches.size() < minNumberMatchesAllowed)
-    {
-        qDebug() << "FIRST found " << matches.size() << "keypoints";
-        return false;
-    }
+        return 0;
 
     vector<Point2f> srcPoints; srcPoints.reserve(matches.size());
     vector<Point2f> dstPoints; dstPoints.reserve(matches.size());
@@ -188,8 +174,7 @@ bool PatternDetector::refineMatchesWithHomography(
 
     swap(matches, inliers);
 
-
     qDebug() << "AFTER found " << matches.size() << "keypoints";
 
-    return matches.size() > minNumberMatchesAllowed;
+    return matches.size() > minNumberMatchesAllowed ? matches.size() : 0;
 }

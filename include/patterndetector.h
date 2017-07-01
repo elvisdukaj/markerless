@@ -10,7 +10,7 @@ public:
 
     Pattern buildPatternFromImage(const cv::Mat& image);
     void train(const Pattern& pattern);
-    bool findPattern(const cv::Mat& grayscale);
+    int findPattern(const cv::Mat& grayscale, bool showMatches);
 
 private:
     bool extractFeatures(const cv::Mat& grayImage,
@@ -19,10 +19,10 @@ private:
 
     std::vector<cv::DMatch> getMatches(const cv::Mat& queryDescriptors);
 
-    bool refineMatchesWithHomography(const std::vector<cv::KeyPoint> &queryKeyPoints, const std::vector<cv::KeyPoint> &trainKeyPoints, float reprojectionThreshold,
+    int refineMatchesWithHomography(const std::vector<cv::KeyPoint> &queryKeyPoints, const std::vector<cv::KeyPoint> &trainKeyPoints, float reprojectionThreshold,
             std::vector<cv::DMatch>& matches,
             cv::Mat& homography
-            , cv::Mat &descriptors);
+            );
 
 private:
     cv::Ptr<cv::FeatureDetector> m_detector;

@@ -21,9 +21,11 @@ ApplicationWindow {
     PatternDetectorFilter {
         id: patternDetectorFilter
 
-        onObjectFound: {
-            console.log("object found");
+        onPatternFound: {
+            patternText.text = "Pattern Found " + keypoints + " matched"
         }
+
+        showMatches: showMatchesSwitch.checked
     }
 
     VideoOutput {
@@ -34,5 +36,22 @@ ApplicationWindow {
 
         focus : visible // to receive focus and capture key events when visible
         filters: [patternDetectorFilter]
+    }
+
+    Switch {
+        id: showMatchesSwitch
+        text: qsTr("Show matches")
+
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+    }
+
+    Label {
+        id: patternText
+
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+
+        text: ""
     }
 }
