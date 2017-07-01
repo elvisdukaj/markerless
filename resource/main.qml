@@ -26,6 +26,8 @@ ApplicationWindow {
         }
 
         showMatches: showMatchesSwitch.checked
+
+        minNumberMatchesAllowed: minAllowerKeypointsSlider.value
     }
 
     VideoOutput {
@@ -53,5 +55,13 @@ ApplicationWindow {
         anchors.left: parent.left
 
         text: ""
+    }
+
+    Slider {
+        id: minAllowerKeypointsSlider;
+
+        from: 7
+        to: 20
+        stepSize: 1
     }
 }

@@ -8,11 +8,16 @@ class PatternDetectorFilter : public QAbstractVideoFilter {
 
     Q_PROPERTY(int showMatches READ showMatches WRITE showMatches)
     Q_PROPERTY(int patternFound NOTIFY patternFound)
+    Q_PROPERTY(int minNumberMatchesAllowed READ minNumberMatchesAllowed WRITE minNumberMatchesAllowed)
+
 public:
     QVideoFilterRunnable* createFilterRunnable() override;
 
     int showMatches() const noexcept { return m_showMatch; }
     void showMatches(int show) noexcept { m_showMatch = show; }
+
+    int minNumberMatchesAllowed() const noexcept { return m_minNumberMatchesAllowed; }
+    void minNumberMatchesAllowed(int c) noexcept { m_minNumberMatchesAllowed = c; }
 
 signals:
     void patternFound(int keypoints);
@@ -22,6 +27,7 @@ private:
 
 private:
     QString m_patternImageFilename;
+    int m_minNumberMatchesAllowed;
     bool m_showMatch;
 };
 

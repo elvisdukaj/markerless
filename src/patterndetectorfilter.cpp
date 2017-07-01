@@ -40,8 +40,13 @@ QVideoFrame PatternDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoS
     {
         cv::Mat frameMat, grayscale;
         videoFrameInGrayScaleAndColor(frame, grayscale, frameMat);
-        auto keypoints = m_detecter.findPattern(grayscale, m_filter->showMatches());
-        if (keypoints )
+        auto keypoints = m_detecter.findPattern(
+                    grayscale,
+                    m_filter->minNumberMatchesAllowed(),
+                    m_filter->showMatches()
+                    );
+
+        if (keypoints)
             emit m_filter->patternFound(keypoints);
     }
     catch(const std::exception& exc)

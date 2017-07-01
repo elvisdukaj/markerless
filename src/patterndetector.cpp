@@ -76,7 +76,7 @@ void PatternDetector::train(const Pattern& pattern)
     m_matcher->train();
 }
 
-int PatternDetector::findPattern(const Mat& grayscale, bool showMatches)
+int PatternDetector::findPattern(const Mat& grayscale, int minNumberMatchesAllowed, bool showMatches)
 {
     extractFeatures(grayscale, m_queryKeyPoints, m_queryDescriptor);
     m_matches = getMatches(m_queryDescriptor);
@@ -89,7 +89,8 @@ int PatternDetector::findPattern(const Mat& grayscale, bool showMatches)
                 m_pattern.keypoints,
                 3.0f,
                 m_matches,
-                m_roughHomography
+                m_roughHomography,
+                minNumberMatchesAllowed
                 );
 
     if (foundKeys && showMatches)
@@ -141,10 +142,9 @@ int PatternDetector::refineMatchesWithHomography(
         const std::vector<KeyPoint>& trainKeyPoints,
         float reprojectionThreshold,
         std::vector<DMatch>& matches,
-        Mat& homography)
+        Mat& homography,
+        int minNumberMatchesAllowed)
 {
-    const int minNumberMatchesAllowed = 13;
-
     qDebug() << "FIRST found " << matches.size() << "keypoints";
     if (matches.size() < minNumberMatchesAllowed)
         return 0;
