@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 set (CMAKE_CXX_STANDARD 14)
-project(markerdetector LANGUAGES CXX)
+project(markerless LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -9,7 +9,6 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 COMPONENTS Core Quick Multimedia REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(Boost REQUIRED)
 
 include_directories(include)
 include_directories(${Boost_INCLUDE_DIRS})
