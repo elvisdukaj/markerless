@@ -58,16 +58,14 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
         cv::Mat frameMat, grayscale;
         videoFrameInGrayScaleAndColor(frame, grayscale, frameMat);
 
-        MarksDetector marksDetector{};
-        marksDetector.processFame(grayscale);
+        m_marksDetector.processFame(grayscale);
 
-
-        if (!marksDetector.markers().empty())
+        if (!m_marksDetector.markers().empty())
         {
-            for(const Marker& marker : marksDetector.markers())
+            for(const Marker& marker : m_marksDetector.markers())
                 marker.drawContours(frameMat, cv::Scalar{0, 255, 0});
 
-            auto idStr = to_string(marksDetector.markers()[0].id());
+            auto idStr = to_string(m_marksDetector.markers()[0].id());
             emit m_filter->markerFound(QString::fromStdString(idStr));
         }
     }
@@ -85,11 +83,6 @@ QVideoFrame MarkerDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSu
 MarksDetector::MarksDetector()
     : m_markerSize{240, 240}
 {
-    m_markerCorners3d.push_back(cv::Point3f(-0.5f,-0.5f,0));
-    m_markerCorners3d.push_back(cv::Point3f(+0.5f,-0.5f,0));
-    m_markerCorners3d.push_back(cv::Point3f(+0.5f,+0.5f,0));
-    m_markerCorners3d.push_back(cv::Point3f(-0.5f,+0.5f,0));
-
     m_markerCorners2d.push_back(cv::Point2f(0,0));
     m_markerCorners2d.push_back(cv::Point2f(m_markerSize.width,0));
     m_markerCorners2d.push_back(cv::Point2f(m_markerSize.width,m_markerSize.height));
@@ -98,6 +91,7 @@ MarksDetector::MarksDetector()
 
 void MarksDetector::processFame(cv::Mat& grayscale)
 {
+    m_markers.clear();
     m_contours.clear();
     m_minCountournSize = grayscale.cols / 5;
     binarize(grayscale);
@@ -252,23 +246,6 @@ void MarksDetector::recognizeCandidates()
         m.drawContours(image, cv::Scalar{255, 0, 0});
 
         m.precisePoints(points);
-
-        cv::Mat Rvec;
-        cv::Mat_<float> Tvec;
-        cv::Mat raux,taux;
-        cv::solvePnP(
-                    m_markerCorners3d, m.points(), m_calibration.instrinsic(), m_calibration.distortion(),
-                    raux, taux
-                    );
-        raux.convertTo(Rvec, CV_32F);
-        taux.convertTo(Tvec, CV_32F);
-
-        cv::Mat_<float> rotMat(3,3);
-        cv::Rodrigues(Rvec, rotMat);
-
-        Eigen::Vector4f traslation;
-        Eigen::Matrix3f rotation;
-
         m_markers.push_back(m);
     }
 }

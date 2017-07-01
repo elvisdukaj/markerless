@@ -1,7 +1,6 @@
 #pragma once
 
 #include "abstractopencvrunnablefilter.h"
-#include "cameracalibration.h"
 #include <opencv2/core.hpp>
 
 class MarkerDetectorFilter : public QAbstractVideoFilter {
@@ -15,15 +14,6 @@ signals:
 
 private:
     friend class ThresholdFilterRunnable;
-};
-
-class MarkerDetectorFilterRunnable : public AbstractVideoFilterRunnable {
-public:
-    MarkerDetectorFilterRunnable(MarkerDetectorFilter* filter);
-    QVideoFrame run(QVideoFrame* input, const QVideoSurfaceFormat &surfaceFormat, RunFlags flags) override;
-
-private:
-    MarkerDetectorFilter* m_filter;
 };
 
 class Marker {
@@ -75,9 +65,16 @@ private:
     std::vector<std::vector<cv::Point2f>> m_possibleContours;
 
     const cv::Size m_markerSize;
-    std::vector<cv::Point3f> m_markerCorners3d;
     std::vector<cv::Point2f> m_markerCorners2d;
     std::vector<Marker> m_markers;
+};
 
-    CameraCalibration m_calibration;
+class MarkerDetectorFilterRunnable : public AbstractVideoFilterRunnable {
+public:
+    MarkerDetectorFilterRunnable(MarkerDetectorFilter* filter);
+    QVideoFrame run(QVideoFrame* input, const QVideoSurfaceFormat &surfaceFormat, RunFlags flags) override;
+
+private:
+    MarkerDetectorFilter* m_filter;
+    MarksDetector m_marksDetector;
 };
