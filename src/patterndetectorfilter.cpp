@@ -49,7 +49,7 @@ QVideoFrame PatternDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoS
         if (keypoints)
         {
             const auto& points = m_detecter.points();
-            cv::line( frameMat, points[0], points[1], cv::Scalar(0, 255, 0), 4 );
+            cv::line( frameMat, points[0], points[1], cv::Scalar( 0, 255, 0), 4 );
             cv::line( frameMat, points[1], points[2], cv::Scalar( 0, 255, 0), 4 );
             cv::line( frameMat, points[2], points[3], cv::Scalar( 0, 255, 0), 4 );
             cv::line( frameMat, points[3], points[0], cv::Scalar( 0, 255, 0), 4 );

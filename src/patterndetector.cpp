@@ -76,17 +76,16 @@ int PatternDetector::findPattern(const Mat& grayscale, int minNumberMatchesAllow
     obj_corners[1] = Point2f( img_object.cols, 0.0f );
     obj_corners[2] = Point2f( img_object.cols, img_object.rows );
     obj_corners[3] = Point2f( 0.0f, img_object.rows );
-    std::vector<Point2f> scene_corners(4);
 
     if (!H.data) return 0;
 
     perspectiveTransform(obj_corners, m_points, H);
 
-    //-- Draw lines between the corners (the mapped object in the scene - image_2 )
-    line( img_matches, m_points[0] + Point2f( img_object.cols, 0), m_points[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
-    line( img_matches, m_points[1] + Point2f( img_object.cols, 0), m_points[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    line( img_matches, m_points[2] + Point2f( img_object.cols, 0), m_points[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    line( img_matches, m_points[3] + Point2f( img_object.cols, 0), m_points[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+//    //-- Draw lines between the corners (the mapped object in the scene - image_2 )
+//    line( img_matches, m_points[0] + Point2f( img_object.cols, 0), m_points[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
+//    line( img_matches, m_points[1] + Point2f( img_object.cols, 0), m_points[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+//    line( img_matches, m_points[2] + Point2f( img_object.cols, 0), m_points[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+//    line( img_matches, m_points[3] + Point2f( img_object.cols, 0), m_points[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
 
     if (showMatches)
     {
@@ -95,7 +94,7 @@ int PatternDetector::findPattern(const Mat& grayscale, int minNumberMatchesAllow
         cv::waitKey(1);
     }
 
-    return foundKeys;
+    return static_cast<int>(foundKeys);
 }
 
 void PatternDetector::extractFeatures(
@@ -124,16 +123,11 @@ void PatternDetector::filterMatches(int minNumberMatchesAllowed)
         if( dist > max_dist ) max_dist = dist;
     }
 
-    qDebug() << "-- Max dist:" << max_dist;
-    qDebug() << "-- Min dist:" << min_dist;
-
     std::vector< DMatch > good_matches;
 
     for( int i = 0; i < m_pattern.descriptor.rows; i++ )
         if( m_matches[i].distance <= 0.1)
             good_matches.push_back(m_matches[i]);
-
-    qDebug() << "Good matches: " << good_matches.size();
 
     swap(m_matches, good_matches);
 

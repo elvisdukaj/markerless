@@ -22,7 +22,7 @@ ApplicationWindow {
         id: patternDetectorFilter
 
         onPatternFound: {
-            patternText.text = "Pattern Found " + keypoints + " matched"
+            patternText.text = "Pattern Found with " + keypoints + " match"
         }
 
         showMatches: showMatchesSwitch.checked
@@ -48,20 +48,42 @@ ApplicationWindow {
         anchors.right: parent.right
     }
 
-    Label {
-        id: patternText
-
+    Rectangle {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
 
-        text: ""
+        color: "black"
+        opacity: 0.5
+
+        width: parent.width / 5
+        height: 20
+
+        Label {
+            id: patternText
+            anchors.fill: parent
+            color: "white"
+            text: "no pattern found"
+        }
     }
 
-    Slider {
-        id: minAllowerKeypointsSlider;
+    Rectangle {
+        anchors.top: parent.top
+        anchors.left: parent.left
 
-        from: 5
-        to: 50
-        stepSize: 1
+        width: parent.width / 5
+        height: 20
+
+        color: "black"
+        opacity: 0.5
+
+        Slider {
+            anchors.fill: parent
+            id: minAllowerKeypointsSlider;
+
+            from: 5
+            to: 50
+            value: 23
+            stepSize: 1
+        }
     }
 }
