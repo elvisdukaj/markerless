@@ -2,7 +2,6 @@ import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.3
 import QtMultimedia 5.5
-import QtQuick.Dialogs 1.2
 
 import com.qubicaamf.vision 1.0
 
@@ -23,6 +22,7 @@ ApplicationWindow {
 
         onPatternFound: {
             patternText.text = "Pattern Found with " + keypoints + " match"
+            summary.visible = true
         }
 
         showMatches: showMatchesSwitch.checked
@@ -38,6 +38,16 @@ ApplicationWindow {
 
         focus : visible // to receive focus and capture key events when visible
         filters: [patternDetectorFilter]
+    }
+
+    Summary {
+        id: summary
+
+        width: 500
+        height: 400
+
+        anchors.centerIn: parent
+        visible: false
     }
 
     Switch {

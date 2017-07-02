@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>qtquickcontrols2.conf</file>
+        <file>Summary.qml</file>
+        <file>Author.qml</file>
     </qresource>
 </RCC>
