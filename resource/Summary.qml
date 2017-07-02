@@ -11,7 +11,7 @@ Rectangle {
     width: 600
     height: 300
 
-    signal exit()
+    signal back()
 
     GridLayout {
         id: grid
@@ -57,10 +57,10 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            text: "<h1>Esci</h1>"
+            text: "<h1>Indietro</h1>"
 
             onClicked: {
-                root.exit()
+                root.back()
             }
         }
     }
@@ -83,7 +83,7 @@ Rectangle {
         id: similAuthors
         visible: false
 
-        onClicked: {
+        onBack: {
             grid.visible = true
             similAuthors.visible = false
         }
