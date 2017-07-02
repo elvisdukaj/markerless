@@ -17,9 +17,8 @@ QVideoFilterRunnable* PatternDetectorFilter::createFilterRunnable()
 PatternDetectorFilterRunnable::PatternDetectorFilterRunnable(PatternDetectorFilter* filter)
     : m_filter{filter}
 {
-    m_patternImage = cv::imread("image.bmp", CV_LOAD_IMAGE_COLOR);
+    m_patternImage = cv::imread("pattern.bmp", CV_LOAD_IMAGE_COLOR);
     m_detecter.buildPatternFromImage(m_patternImage);
-//    m_detecter.train(pattern);
 }
 
 QVideoFrame PatternDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSurfaceFormat&, QVideoFilterRunnable::RunFlags)

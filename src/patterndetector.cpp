@@ -70,7 +70,6 @@ int PatternDetector::findPattern(const Mat& grayscale, int minNumberMatchesAllow
 
     auto img_object = m_pattern.grayscale;
 
-    //-- Get the corners from the image_1 ( the object to be "detected" )
     std::vector<Point2f> obj_corners(4);
     obj_corners[0] = Point2f(0.0f);
     obj_corners[1] = Point2f( img_object.cols, 0.0f );
@@ -81,15 +80,8 @@ int PatternDetector::findPattern(const Mat& grayscale, int minNumberMatchesAllow
 
     perspectiveTransform(obj_corners, m_points, H);
 
-//    //-- Draw lines between the corners (the mapped object in the scene - image_2 )
-//    line( img_matches, m_points[0] + Point2f( img_object.cols, 0), m_points[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
-//    line( img_matches, m_points[1] + Point2f( img_object.cols, 0), m_points[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-//    line( img_matches, m_points[2] + Point2f( img_object.cols, 0), m_points[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-//    line( img_matches, m_points[3] + Point2f( img_object.cols, 0), m_points[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-
     if (showMatches)
     {
-        //-- Show detected matches
         imshow( "Good Matches & Object detection", img_matches );
         cv::waitKey(1);
     }
