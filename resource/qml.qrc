@@ -4,5 +4,8 @@
         <file>qtquickcontrols2.conf</file>
         <file>Summary.qml</file>
         <file>Author.qml</file>
+        <file>SimilarAuthor.qml</file>
+        <file>Eliot.qml</file>
+        <file>Pirandello.qml</file>
     </qresource>
 </RCC>
