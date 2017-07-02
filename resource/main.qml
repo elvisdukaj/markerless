@@ -22,7 +22,7 @@ ApplicationWindow {
 
         onPatternFound: {
             patternText.text = "Pattern Found with " + keypoints + " match"
-            summary.visible = true
+            summary.visible = enableBookInfo.checked
         }
 
         showMatches: showMatchesSwitch.checked
@@ -47,14 +47,26 @@ ApplicationWindow {
         height: 400
 
         anchors.centerIn: parent
-        visible: false
+        visible: true
+
+        onExit: {
+            visible = false
+        }
     }
 
     Switch {
         id: showMatchesSwitch
-        text: qsTr("Show matches")
+        text: qsTr("Mostra i match")
 
         anchors.bottom: parent.bottom
+        anchors.right: parent.right
+    }
+
+    Switch {
+        id: enableBookInfo
+        text: qsTr("Abilita info")
+
+        anchors.top: parent.top
         anchors.right: parent.right
     }
 
