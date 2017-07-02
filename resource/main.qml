@@ -11,7 +11,7 @@ ApplicationWindow {
     visible: true
     width: 800
     height: 600
-    title: qsTr("Hello World")
+    title: qsTr("Markerless Example")
 
     Camera {
         id: camera
@@ -47,9 +47,9 @@ ApplicationWindow {
         height: 400
 
         anchors.centerIn: parent
-        visible: true
+        visible: false
 
-        onExit: {
+        onBack: {
             visible = false
         }
     }

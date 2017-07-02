@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.3
 
 Item {
     id: root
-    signal clicked()
+    signal back()
 
     ColumnLayout {
         id: grid
@@ -41,7 +41,7 @@ Item {
             text: "<h1>Indietro</h1>"
 
             onClicked: {
-                root.clicked()
+                root.back()
             }
         }
 
