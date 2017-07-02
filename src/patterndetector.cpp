@@ -6,175 +6,137 @@ using namespace std;
 #include <opencv2/xfeatures2d.hpp>
 #include <QDebug>
 
-// Draw matches between two images
-inline cv::Mat getMatchesImage(cv::Mat query, cv::Mat pattern, const std::vector<cv::KeyPoint>& queryKp, const std::vector<cv::KeyPoint>& trainKp, std::vector<cv::DMatch> matches, int maxMatchesDrawn)
-{
-    cv::Mat outImg;
-
-    if (matches.size() > maxMatchesDrawn)
-    {
-        matches.resize(maxMatchesDrawn);
-    }
-
-    cv::drawMatches
-            (
-                query,
-                queryKp,
-                pattern,
-                trainKp,
-                matches,
-                outImg,
-                cv::Scalar(0,200,0,255),
-                cv::Scalar::all(-1),
-                std::vector<char>(),
-                cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS
-                );
-
-    return outImg;
-}
-
 PatternDetector::PatternDetector()
-    : m_detector{ORB::create(1000)}
-    , m_extractor{xfeatures2d::FREAK::create(false, false)}
-    , m_matcher{BFMatcher::create(NORM_HAMMING, true)}
+    : m_detector{xfeatures2d::SurfFeatureDetector::create(400)}
+    , m_extractor{xfeatures2d::SurfDescriptorExtractor::create(400)}
+    , m_matcher{FlannBasedMatcher::create()}
 {
 }
 
-Pattern PatternDetector::buildPatternFromImage(const Mat& image)
+void PatternDetector::buildPatternFromImage(const Mat& image)
 {
-    Pattern pattern;
-
-    pattern.image = image.clone();
-    cvtColor(pattern.image, pattern.grayscale, COLOR_BGR2GRAY);
-    extractFeatures(pattern.grayscale, pattern.keypoints, pattern.descriptor);
+    m_pattern.image = image.clone();
+    cvtColor(m_pattern.image, m_pattern.grayscale, COLOR_BGR2GRAY);
+    extractFeatures(m_pattern.grayscale, m_pattern.keypoints, m_pattern.descriptor);
 
     const float w = static_cast<float>(image.cols);
     const float h = static_cast<float>(image.rows);
 
-    pattern.points  = {
+    m_pattern.points  = {
         Point2f{0.0f, 0.0f},
         Point2f{w   , 0.0f},
         Point2f{w   , h   },
         Point2f{0.0f, h   }
     };
 
-    drawKeypoints(pattern.image, pattern.keypoints, pattern.imageKeyPoints);
-//    cv::imshow("image", pattern.image);
-//    cv::imshow("grayscale", pattern.grayscale);
-//    cv::imshow("KeyPoint", pattern.imageKeyPoints);
-//    cv::waitKey(1);
-    return pattern;
-}
-
-void PatternDetector::train(const Pattern& pattern)
-{
-    m_pattern = pattern;
-    m_matches.clear();
-    vector<Mat> descriptors(1);
-    descriptors[0] = pattern.descriptor.clone();
-    m_matcher->add(descriptors);
-    m_matcher->train();
+    drawKeypoints(m_pattern.image, m_pattern.keypoints, m_pattern.imageKeyPoints);
 }
 
 int PatternDetector::findPattern(const Mat& grayscale, int minNumberMatchesAllowed, bool showMatches)
 {
     extractFeatures(grayscale, m_queryKeyPoints, m_queryDescriptor);
-    m_matches = getMatches(m_queryDescriptor);
+    if (m_queryKeyPoints.empty()) return 0;
 
-    if (m_matches.empty())
-        return false;
+    getMatches(m_matches);
+    if (m_matches.empty()) return 0;
 
-    auto foundKeys = refineMatchesWithHomography(
-                m_queryKeyPoints,
-                m_pattern.keypoints,
-                3.0f,
-                m_matches,
-                m_roughHomography,
-                minNumberMatchesAllowed
-                );
+    filterMatches(minNumberMatchesAllowed);
+    if (m_matches.empty()) return 0;
 
-    if (foundKeys && showMatches)
+    auto foundKeys = m_matches.size();
+
+    Mat img_matches;
+    if (showMatches)
     {
-        Mat image = getMatchesImage(
-                    grayscale, m_pattern.image,
-                    m_queryKeyPoints,
-                    m_pattern.keypoints,
-                    m_matches,
-                    100);
+        drawMatches(m_pattern.grayscale, m_pattern.keypoints,
+                    grayscale, m_queryKeyPoints,
+                    m_matches, img_matches,
+                    Scalar::all(-1), Scalar::all(-1),
+                    vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    }
 
-        imshow("matches", image);
-        waitKey(1);
+    //-- Localize the object
+    std::vector<Point2f> obj;
+    std::vector<Point2f> scene;
+
+    for( int i = 0; i < m_matches.size(); i++ )
+    {
+        //-- Get the keypoints from the good matches
+        obj.push_back( m_pattern.keypoints[m_matches[i].queryIdx ].pt );
+        scene.push_back( m_queryKeyPoints[ m_matches[i].trainIdx ].pt );
+    }
+
+    Mat H = findHomography(obj, scene, CV_RANSAC);
+
+    auto img_object = m_pattern.grayscale;
+
+    //-- Get the corners from the image_1 ( the object to be "detected" )
+    std::vector<Point2f> obj_corners(4);
+    obj_corners[0] = Point2f(0.0f);
+    obj_corners[1] = Point2f( img_object.cols, 0.0f );
+    obj_corners[2] = Point2f( img_object.cols, img_object.rows );
+    obj_corners[3] = Point2f( 0.0f, img_object.rows );
+    std::vector<Point2f> scene_corners(4);
+
+    if (!H.data) return 0;
+
+    perspectiveTransform(obj_corners, m_points, H);
+
+    //-- Draw lines between the corners (the mapped object in the scene - image_2 )
+    line( img_matches, m_points[0] + Point2f( img_object.cols, 0), m_points[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
+    line( img_matches, m_points[1] + Point2f( img_object.cols, 0), m_points[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    line( img_matches, m_points[2] + Point2f( img_object.cols, 0), m_points[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    line( img_matches, m_points[3] + Point2f( img_object.cols, 0), m_points[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+
+    if (showMatches)
+    {
+        //-- Show detected matches
+        imshow( "Good Matches & Object detection", img_matches );
+        cv::waitKey(1);
     }
 
     return foundKeys;
 }
 
-bool PatternDetector::extractFeatures(
+void PatternDetector::extractFeatures(
         const Mat& grayImage,
         vector<KeyPoint>& keypoints,
         Mat& descriptor)
 {
-    m_detector->detectAndCompute(grayImage, Mat(), keypoints, descriptor);
-    return true;
-
     m_detector->detect(grayImage, keypoints);
-
-    if (keypoints.empty())
-        return false;
-
     m_extractor->compute(grayImage, keypoints, descriptor);
-
-    if (keypoints.empty())
-        return false;
-
-    return true;
 }
 
-vector<DMatch> PatternDetector::getMatches(const Mat& queryDescriptors)
+void PatternDetector::getMatches(std::vector<DMatch>& matches)
 {
-    vector<DMatch> matches;
-    m_matcher->match(queryDescriptors, matches);
-    return matches;
+    matches.clear();
+    m_matcher->match(m_pattern.descriptor, m_queryDescriptor, matches);
 }
 
-int PatternDetector::refineMatchesWithHomography(
-        const std::vector<KeyPoint>& queryKeyPoints,
-        const std::vector<KeyPoint>& trainKeyPoints,
-        float reprojectionThreshold,
-        std::vector<DMatch>& matches,
-        Mat& homography,
-        int minNumberMatchesAllowed)
+void PatternDetector::filterMatches(int minNumberMatchesAllowed)
 {
-    qDebug() << "FIRST found " << matches.size() << "keypoints";
-    if (matches.size() < minNumberMatchesAllowed)
-        return 0;
+    double max_dist = 0; double min_dist = 100;
 
-    vector<Point2f> srcPoints; srcPoints.reserve(matches.size());
-    vector<Point2f> dstPoints; dstPoints.reserve(matches.size());
-
-    for(const auto& match : matches)
+    for( int i = 0; i < m_pattern.descriptor.rows; i++ )
     {
-        srcPoints.push_back(trainKeyPoints[match.trainIdx].pt);
-        dstPoints.push_back(queryKeyPoints[match.queryIdx].pt);
+        double dist = m_matches[i].distance;
+        if( dist < min_dist ) min_dist = dist;
+        if( dist > max_dist ) max_dist = dist;
     }
 
-    vector<unsigned char> inliersMask(srcPoints.size());
+    qDebug() << "-- Max dist:" << max_dist;
+    qDebug() << "-- Min dist:" << min_dist;
 
-    homography = cv::findHomography(
-                srcPoints, dstPoints, CV_FM_RANSAC,
-                reprojectionThreshold, inliersMask
-                );
+    std::vector< DMatch > good_matches;
 
-    vector<DMatch> inliers;
-    inliers.reserve(matches.size());
+    for( int i = 0; i < m_pattern.descriptor.rows; i++ )
+        if( m_matches[i].distance <= 0.1)
+            good_matches.push_back(m_matches[i]);
 
-    for(int i = 0; i < inliersMask.size(); ++i)
-        if(inliersMask[i])
-            inliers.push_back(matches[i]);
+    qDebug() << "Good matches: " << good_matches.size();
 
-    swap(matches, inliers);
+    swap(m_matches, good_matches);
 
-    qDebug() << "AFTER found " << matches.size() << "keypoints";
-
-    return matches.size() > minNumberMatchesAllowed ? matches.size() : 0;
+    if (m_matches.size() < minNumberMatchesAllowed)
+        m_matches.clear();
 }

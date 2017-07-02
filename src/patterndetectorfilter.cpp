@@ -18,8 +18,8 @@ PatternDetectorFilterRunnable::PatternDetectorFilterRunnable(PatternDetectorFilt
     : m_filter{filter}
 {
     m_patternImage = cv::imread("image.bmp", CV_LOAD_IMAGE_COLOR);
-    auto pattern = m_detecter.buildPatternFromImage(m_patternImage);
-    m_detecter.train(pattern);
+    m_detecter.buildPatternFromImage(m_patternImage);
+//    m_detecter.train(pattern);
 }
 
 QVideoFrame PatternDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoSurfaceFormat&, QVideoFilterRunnable::RunFlags)
@@ -47,7 +47,15 @@ QVideoFrame PatternDetectorFilterRunnable::run(QVideoFrame* frame, const QVideoS
                     );
 
         if (keypoints)
+        {
+            const auto& points = m_detecter.points();
+            cv::line( frameMat, points[0], points[1], cv::Scalar(0, 255, 0), 4 );
+            cv::line( frameMat, points[1], points[2], cv::Scalar( 0, 255, 0), 4 );
+            cv::line( frameMat, points[2], points[3], cv::Scalar( 0, 255, 0), 4 );
+            cv::line( frameMat, points[3], points[0], cv::Scalar( 0, 255, 0), 4 );
+
             emit m_filter->patternFound(keypoints);
+        }
     }
     catch(const std::exception& exc)
     {

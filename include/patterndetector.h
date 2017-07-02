@@ -8,25 +8,17 @@ class PatternDetector {
 public:
     PatternDetector();
 
-    Pattern buildPatternFromImage(const cv::Mat& image);
-    void train(const Pattern& pattern);
+    void buildPatternFromImage(const cv::Mat& image);
     int findPattern(const cv::Mat& grayscale, int minNumberMatchesAllowed, bool showMatches);
+    const std::vector<cv::Point2f> points() const noexcept { return m_points; }
 
 private:
-    bool extractFeatures(const cv::Mat& grayImage,
+    void extractFeatures(const cv::Mat& grayImage,
                          std::vector<cv::KeyPoint>& keypoints,
                          cv::Mat& descriptor);
 
-    std::vector<cv::DMatch> getMatches(const cv::Mat& queryDescriptors);
-
-    int refineMatchesWithHomography(
-            const std::vector<cv::KeyPoint>& queryKeyPoints,
-            const std::vector<cv::KeyPoint>& trainKeyPoints,
-            float reprojectionThreshold,
-            std::vector<cv::DMatch>& matches,
-            cv::Mat& homography,
-            int minNumberMatchesAllowed
-            );
+    void getMatches(std::vector<cv::DMatch>& matches );
+    void filterMatches(int minNumberMatchesAllowed);
 
 private:
     cv::Ptr<cv::FeatureDetector> m_detector;
@@ -34,6 +26,7 @@ private:
     cv::Ptr<cv::DescriptorMatcher> m_matcher;
 
     Pattern m_pattern;
+    std::vector<cv::Point2f> m_points;
 
     std::vector<cv::KeyPoint> m_queryKeyPoints;
     cv::Mat m_queryDescriptor;

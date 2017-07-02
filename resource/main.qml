@@ -60,8 +60,8 @@ ApplicationWindow {
     Slider {
         id: minAllowerKeypointsSlider;
 
-        from: 7
-        to: 20
+        from: 5
+        to: 50
         stepSize: 1
     }
 }
