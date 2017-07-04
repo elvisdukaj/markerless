@@ -18,12 +18,12 @@ QVideoFilterRunnable* PatternDetectorFilter::createFilterRunnable()
 PatternDetectorFilterRunnable::PatternDetectorFilterRunnable(PatternDetectorFilter* filter)
     : m_filter{filter}
 {
-    m_patternImage = cv::imread("pattern.bmp", CV_LOAD_IMAGE_COLOR);
+    m_patternImage = cv::imread("pattern2.jpg", CV_LOAD_IMAGE_COLOR);
 
     if (!m_patternImage.data)
     {
-        cerr << "unable to open pattern.bmp!" << endl;
-        throw runtime_error{"unable to open pattern.bmp"};
+        cerr << "unable to open pattern2.jpg!" << endl;
+        throw runtime_error{"unable to open pattern2.jpg"};
     }
 
     m_detecter.buildPatternFromImage(m_patternImage);
