@@ -8,5 +8,6 @@
         <file>Joyce.qml</file>
         <file>Pirandello.qml</file>
         <file>Plot.qml</file>
+        <file>SuggestedNovel.qml</file>
     </qresource>
 </RCC>

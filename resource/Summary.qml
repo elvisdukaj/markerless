@@ -44,7 +44,12 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            text: "<h1>Generi Simili</h1>"
+            text: "<h1>Opere Consigliate</h1>"
+
+            onClicked: {
+                suggestedNovel.visible = true;
+                grid.visible = false;
+            }
         }
         Button {
             Layout.fillWidth: true
@@ -90,7 +95,7 @@ Rectangle {
 
         onClicked: {
             grid.visible = true
-            author.visible = false;
+            visible = false;
         }
     }
 
@@ -102,7 +107,19 @@ Rectangle {
 
         onBack: {
             grid.visible = true
-            similAuthors.visible = false
+            visible = false
+        }
+    }
+
+    SuggestedNovel {
+        id: suggestedNovel
+        anchors.fill: parent
+
+        visible: false
+
+        onBack: {
+            grid.visible = true
+            visible = false
         }
     }
 }
