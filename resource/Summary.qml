@@ -34,6 +34,11 @@ Rectangle {
             Layout.fillHeight: true
 
             text: "<h1>Romanzo</h1>"
+
+            onClicked: {
+                plot.visible = true
+                grid.visible = false
+            }
         }
         Button {
             Layout.fillWidth: true
@@ -65,6 +70,18 @@ Rectangle {
         }
     }
 
+    Plot {
+        id: plot
+        anchors.fill: parent
+
+        visible: false
+
+        onClicked: {
+            grid.visible = true
+            plot.visible = false
+        }
+    }
+
     Author {
         id: author
 
@@ -78,9 +95,9 @@ Rectangle {
     }
 
     SimilarAuthor {
+        id: similAuthors
         anchors.fill: parent
 
-        id: similAuthors
         visible: false
 
         onBack: {

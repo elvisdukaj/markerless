@@ -1,17 +1,40 @@
 import QtQuick 2.7
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.3
+import QtQuick.Controls 2.2
 
-Label {
+ScrollView {
     id: root
-
     signal clicked()
 
-    text: qsTr("<h1>Italo Svevo is cool</h1>")
+    TextArea {
 
-    MouseArea {
-        anchors.fill: parent
-        onClicked: root.clicked()
+        text: qsTr(
+                  "
+<h1>Italo Svevo</h1>
+<p>
+Italo Svevo, pseudonimo di Aron Hector Schmitz (Trieste, 19 dicembre 1861 – Motta di Livenza, 13 settembre 1928), è stato uno scrittore e drammaturgo italiano, autore di tre romanzi, numerosi racconti brevi e opere teatrali. Di cultura mitteleuropea, ebbe in Italia riconoscimenti tardivi e fama postuma.</p>
+<h2>Biografia</h2>
+<p>Nato Aron Hector Schmitz a Trieste, nell'allora impero austro-ungarico, la notte tra il 19 e il 20 dicembre 1861 in una famiglia borghese di religione ebraica, (padre tedesco, Franz, commerciante, e madre italiana, Allegra Moravia), cambiò in seguito il suo nome in Ettore Schmitz e a seguire lo italianizzò definitivamente in Ettore Samigli in seguito all'annessione all'Italia della Venezia Giulia. Con tale ultimo nome pubblicò i suoi primi lavori. </p>
+<p>Nel 1874 fu mandato dal padre a vivere e a studiare, assieme ai due fratelli Adolfo ed Elio, al collegio di Segnitz, in Baviera, dove studiò il tedesco e altre materie utili per l'attività commerciale. La sua formazione avvenne quindi in un ambiente linguistico prettamente tedesco[2] - benché italofono fin dall'infanzia - elemento che influenzerà profondamente il suo stile letterario, portandolo a caratteristiche forzature stilistiche </p>
+<p>La biculturalità sarà un elemento importante nella vita dello scrittore, che egli tuttavia (a differenza di molti letterati risorgimentali) non vivrà mai in modo conflittuale o doloroso, ma sempre in armonia, sottolineando anzi la propria doppia culturalità nella scelta dello pseudonimo Italo Svevo[senza fonte][3]. Nel 1878 tornò a Trieste e terminò il suo percorso di studi commerciali all'istituto commerciale Pasquale Revoltella senza trascurare la cultura letteraria leggendo prima i classici tedeschi e successivamente i classici italiani</p>
+<p>Nel 1880, dopo il fallimento dell'azienda paterna, dovette iniziare a lavorare presso la filiale cittadina della Banca Union di Vienna, impiego che, sebbene mai amato, mantenne per diciannove anni. Frequentando la Biblioteca civica di Trieste, legge i classici italiani e i naturalisti francesi, estendendo i propri interessi anche alla filosofia (Arthur Schopenhauer e Friedrich Nietzsche) e alla scienza, in particolare alle opere di Charles Darwin.</p>
+<p>Nello stesso periodo iniziò la collaborazione con L'Indipendente, giornale di ampie vedute socialiste per il quale scrisse 25 recensioni e saggi teatrali e letterari. Riuscì anche a far pubblicare, rispettivamente nel 1888 e nel 1890, i suoi racconti Una lotta e L'assassinio di via Belpoggio, scritti in lingua italiana sotto lo pseudonimo \"Ettore Samigli\", cui fecero seguito un secondo racconto e un monologo teatrale. Nel frattempo, nel 1886, perse suo fratello Elio, e Svevo iniziò a scrivere commedie e (i primi abbozzi già dal 1887) un romanzo</p>
+<p>Nel 1892, anno in cui muore suo padre, avviene la pubblicazione di questo primo romanzo Una vita, firmato con il definitivo pseudonimo \"Italo Svevo\", un omaggio alle sue doppie radici italiane e tedesche; l'opera viene sostanzialmente ignorata dalla critica e dal pubblico. In quell'anno ha una relazione con la popolana Giuseppina Zergol, che ispirò poi il personaggio di Angiolina in Senilità. Dopo alcune collaborazioni con il giornale Il Piccolo e una cattedra all'Istituto Revoltella, nel 1895 muore la madre, e un anno dopo, nel 1896 si fidanzerà con la cugina, Livia Veneziani, figlia di un commerciante di vernici sottomarine (cattolico), che sposerà nel 1896 con rito civile, e nel 1897, dopo aver abiurato alla religione ebraica ed essersi convertito, con matrimonio cattolico.</p>
+<p>Dalla donna ha una figlia, Letizia, che avrà una vita molto lunga (1897-1993), ma anche caratterizzata da molti lutti e tragedie (i tre figli moriranno in guerra, due dispersi in Russia e uno a Trieste durante l'insurrezione contro i nazisti il 1º maggio del 1945).[4][5] Il matrimonio segna una svolta fondamentale nella vita di Svevo: in primo luogo l'«inetto» trova finalmente un terreno solido su cui poggiare e di conseguenza può arrivare a coincidere con quella figura virile che sembrava irraggiungibile, il pater familias. Nel 1898 pubblica il secondo romanzo, Senilità; anche quest'opera passa però quasi sotto silenzio. Questo insuccesso letterario lo spinge quasi ad abbandonare del tutto la letteratura. Dimessosi dalla banca, nel 1899 Svevo entra nell'azienda del suocero, accantonando la sua attività letteraria, che diventa marginale e segreta.[5]</p>
+<p>Costretto per lavoro a viaggi all'estero, dove si porta un violino senza riuscire a esercitarsi che raramente, ha ancora qualche voglia di scrivere e si trova a comporre qualche pagina teatrale e alcune favole. Frequentando un corso d'inglese alla Berlitz School di Trieste nel 1907, conosce lo scrittore irlandese James Joyce, suo insegnante. Joyce lo incoraggiò a scrivere un nuovo romanzo e, intorno al 1910, grazie al cognato Bruno Veneziani, che su consiglio di Edoardo Weiss si reca a Vienna e cerca di farsi curare da Sigmund Freud, entra in contatto con la psicoanalisi freudiana (per parte sua Svevo nel 1911 conosce e frequenta Wilhelm Stekel, allievo di Freud che si sta occupando del rapporto tra poesia e inconscio): entrambi gli eventi influenzeranno la successiva produzione letteraria.[5]</p>
+<p>Allo scoppio della prima guerra mondiale, l'azienda nella quale lavora viene chiusa dalle autorità austriache (il suocero morirà nel 1921), Joyce si allontana e torna a Trieste solo nel 1919, per poi recarsi però definitivamente a Parigi (dove Svevo lo andrà a trovare più volte). Durante tutta la durata della guerra lo scrittore rimane nella città natale, mantenendo la cittadinanza austriaca ma cercando di restare il più possibile neutrale di fronte al conflitto.[5]</p>
+<p>In questo periodo approfondisce la conoscenza della letteratura inglese; si interessa alla psicoanalisi e traduce L'interpretazione dei sogni di Sigmund Freud, che influenzerà notevolmente la sua opera successiva. In seguito accetta di buon grado l'occupazione italiana della città e, dopo la guerra, con il definitivo passaggio di Trieste al Regno d'Italia, collabora al primo importante giornale triestino italiano, \"La Nazione\", fondato dall'amico Giulio Cesari. Prende la cittadinanza italiana e italianizza il suo nome in Ettore Schmitz.[5]</p>
+<p>Nel 1919 collabora con il giornale La Nazione, e inizia a scrivere La coscienza di Zeno, poi pubblicata nel 1923, ancora senza successo, fino al 1925, quando l'amico Joyce la propone ad alcuni critici francesi (in particolare a Valéry Larbaud che ne scrive sulla «NRF» e a Benjamin Crémieux), mentre in Italia, Eugenio Montale, in anticipo su tutti, ne afferma la grandezza: scoppia così il \"caso Svevo\", una vivace discussione attorno allo scritto su Zeno.[5] Tra i primi estimatori sono da ricordare anche Sergio Solmi, Giuseppe Prezzolini e Anton Giulio Bragaglia.</p>
+<p>Non aderisce al fascismo, ma nemmeno si oppone, a differenza del genero Antonio Fonda Savio, futuro antifascista e partigiano del CLN.[6]</p>
+<p>Nel 1926 la rivista francese Le navire d'argent gli dedicò un intero fascicolo, nel 1927 tenne una famosa conferenza su Joyce a Milano, e nel marzo 1928 venne festeggiato a Parigi tra altri noti scrittori, tra cui Isaak Ėmmanuilovič Babel'.</p>
+<p>Il 12 settembre 1928, mentre tornava con la famiglia da un periodo di cure termali a Bormio, il 67enne Svevo è coinvolto in un incidente stradale presso Motta di Livenza (provincia di Treviso), in cui rimane ferito, apparentemente in maniera non grave. Nella vettura c'erano il nipote Paolo Fonda Savio, l'autista e la moglie Livia. Secondo la testimonianza della figlia, Svevo si fratturò solo il femore, ma, mentre veniva portato all'ospedale del paese, ebbe un attacco di insufficienza cardiaca con crisi respiratoria, anche se non morì immediatamente. Raggiunto il nosocomio peggiorò rapidamente: in preda all'asma, morì 24 ore dopo l'incidente, alle ore 14:30 del 13 settembre. La causa del decesso fu asma cardiaco, sopraggiunto per l'enfisema polmonare di cui soffriva da tempo e lo stress psicofisico dell'incidente.[5] Il quarto romanzo, Il vecchione o Le confessioni del vegliardo, una \"continuazione\" de La coscienza di Zeno, rimarrà incompiuto[7].</p>
+<p>I funerali si svolsero a Trieste il 15 settembre, secondo il rito ebraico[7].</p>")
+        textFormat: Text.RichText
+        wrapMode: Text.WordWrap
+        horizontalAlignment: Text.AlignLeft
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.clicked()
+        }
     }
 }
-
