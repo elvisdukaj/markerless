@@ -26,7 +26,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            text: "<h1>T. Eliot</h1>"
+            text: "<h1>James Joyce</h1>"
 
             onClicked: {
                 eliot.visible = true;
@@ -60,7 +60,7 @@ Item {
         }
     }
 
-    Eliot {
+    Joyce {
         id: eliot
         anchors.fill: parent
         visible: false

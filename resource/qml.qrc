@@ -5,7 +5,7 @@
         <file>Summary.qml</file>
         <file>Author.qml</file>
         <file>SimilarAuthor.qml</file>
-        <file>Eliot.qml</file>
+        <file>Joyce.qml</file>
         <file>Pirandello.qml</file>
         <file>Plot.qml</file>
     </qresource>
