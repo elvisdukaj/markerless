@@ -47,7 +47,7 @@ ApplicationWindow {
         height: 400
 
         anchors.centerIn: parent
-        visible: true
+        visible: false
 
         onBack: {
             visible = false
